@@ -139,6 +139,9 @@ header {
   border-right: 2px solid rgba(255, 255, 255, 0.5);
   background: rgba(255, 255, 255, 0.05);
 }
+.h-priority[hidden] {
+  display: none;
+}
 .h-priority-label {
   font-size: clamp(9px, 1.2vh, 12px);
   font-weight: 700; letter-spacing: 3px;
@@ -958,7 +961,7 @@ footer {
 
       <!-- EVOLUÇÃO -->
       <div class="globe-section" style="flex-direction:column;gap:clamp(6px,1vh,10px);position:relative;">
-        <div class="h-priority h-priority-left" id="prioridadeAtiva">
+        <div class="h-priority h-priority-left" id="prioridadeAtiva" hidden>
           <span class="h-priority-label">Prioridade Ativa</span>
           <span class="h-priority-value" id="prioridadeAtivaValue">—</span>
         </div>
@@ -2605,7 +2608,7 @@ async function fetchPs1Summary() {
   return {
     prioridadeAtiva,
     prioridadeAtivaPct: getPs1ActivePriorityPercentage(table, row, prioridadeAtiva),
-    geral: readValue('GERAL', 'AK'),
+    geral: readValue('GERAL(T)', 'N'),
   };
 }
 
@@ -2635,9 +2638,9 @@ function refreshPs1Fields() {
 
     const geralPct = parseSheetPercentage(geral);
     if (geralPct == null) {
-      console.warn('[evolução] valor de GERAL (PS3!AK2) não parseável:', geral);
+      console.warn('[evolução] valor de GERAL(T) (PS3!N2) não parseável:', geral);
     } else {
-      console.log('[evolução] GERAL (PS3!AK2) =', geral, '→', geralPct, '%');
+      console.log('[evolução] GERAL(T) (PS3!N2) =', geral, '→', geralPct, '%');
     }
     updateEvolucao(geralPct != null ? geralPct : 0);
   }).catch(err => {
