@@ -1983,10 +1983,9 @@ const ZONA_CONFIGS = [
       mode: 'row-headers',
       startColumn: 'AL',
       endColumn: 'CE',
-      ignoreLabels: ['%'],
+      percentLabel: '%',
       hideHeader: true,
       gridLayout: { cols: 4, rows: 3, flow: 'column' },
-      matchValue: 3,
       limit: 12,
     },
   },
@@ -2157,6 +2156,32 @@ async function fetchZonaListValues(source) {
     const ignore = new Set((source.ignoreLabels || []).map(s => String(s).trim()));
     const firstRow = table.rows[0]; // linha 2 da Sheet (gviz com headers=1 desloca)
     const limit = Math.max(1, source.limit || 50);
+    if (source.percentLabel !== undefined && source.percentLabel !== null) {
+      const percentLabel = String(source.percentLabel).trim();
+      const values = [];
+      for (let i = startIdx + 1; i <= endIdx && i < table.cols.length && values.length < limit; i += 1) {
+        const col = table.cols[i] || {};
+        const label = col.label != null && String(col.label).trim() !== ''
+          ? String(col.label).trim()
+          : String(col.id || '').trim();
+        if (label !== percentLabel) continue;
+
+        const value = getValueFromRow(firstRow, i);
+        let isHundredPercent = typeof value === 'number' && (value === 1 || value === 100);
+        if (!isHundredPercent && value != null && String(value).trim() !== '') {
+          const normalized = String(value).trim().replace(',', '.').replace(/%\s*$/, '').trim();
+          isHundredPercent = Number.isFinite(Number(normalized)) && Number(normalized) === 100;
+        }
+        if (!isHundredPercent) continue;
+
+        const previousCol = table.cols[i - 1] || {};
+        const previousLabel = previousCol.label != null && String(previousCol.label).trim() !== ''
+          ? String(previousCol.label).trim()
+          : String(previousCol.id || '').trim();
+        if (previousLabel !== '' && previousLabel !== percentLabel) values.push(previousLabel);
+      }
+      return values;
+    }
     // matchValue: se definido, só mostra colunas cuja célula da linha 2
     // tenha esse valor exacto.
     const matchValue = source.matchValue;
