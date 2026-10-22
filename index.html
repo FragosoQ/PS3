@@ -1041,6 +1041,7 @@ footer {
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="./ps3-priority-progress.js"></script>
 <script>
 const SHEET_CONFIG_DEFAULT = {
   id: '1GQUB52a2gKR429bjqJrNkbP5rjR7Z_4v85z9M7_Cr8Y',
@@ -2601,26 +2602,15 @@ function renderSheetData(sheetRow) {
   renderZones(sheetRow);
 }
 
-function getPs1ActivePriorityPercentage(table, row, activePriority) {
-  const priorityNumber = Number(String(activePriority == null ? '' : activePriority).trim());
-  if (!Number.isInteger(priorityNumber) || priorityNumber < 1) return null;
+let currentPs3ProgressSource = null;
 
-  const startIndex = columnLetterToIndex('AL');
-  const endIndex = columnLetterToIndex('CE');
-  const targetHeader = normalizeString(`P${priorityNumber}`);
-  for (let index = startIndex; index <= endIndex && index + 1 < table.cols.length; index += 1) {
-    const header = normalizeString(table.cols[index].label || table.cols[index].id || '');
-    if (header !== targetHeader) continue;
-
-    const percentageHeader = normalizeString(table.cols[index + 1].label || table.cols[index + 1].id || '');
-    if (percentageHeader !== '%') return null;
-
-    const rawPercentage = getValueFromRow(row, index + 1);
-    if (rawPercentage == null || String(rawPercentage).trim() === '') return null;
-    const percentage = parseSheetPercentage(rawPercentage);
-    return percentage != null && percentage !== 100 ? percentage : null;
+function refreshCurrentPs3Progress() {
+  if (!currentPs3ProgressSource) {
+    updatePrioridadeEmCurso(null, null);
+    return;
   }
-  return null;
+  const { table, row, priority } = currentPs3ProgressSource;
+  updatePrioridadeEmCurso(priority, PS3PriorityProgress.calculate(table, row, priority));
 }
 
 async function fetchPs1Summary() {
@@ -2633,7 +2623,8 @@ async function fetchPs1Summary() {
   const prioridadeAtiva = readValue('Posto3', 'CQ');
   return {
     prioridadeAtiva,
-    prioridadeAtivaPct: getPs1ActivePriorityPercentage(table, row, prioridadeAtiva),
+    table,
+    row,
     geral: readValue('GERAL(T)', 'N'),
   };
 }
@@ -2647,12 +2638,12 @@ function updatePrioridadeEmCurso(prioridade, pct) {
   box.hidden = !visible;
   if (!visible) return;
   document.getElementById('prioCursoName').textContent = /^\d+$/.test(prioridade) ? `P${prioridade}` : prioridade;
-  document.getElementById('prioCursoPct').textContent = pct;
+  document.getElementById('prioCursoPct').textContent = Number(pct).toFixed(1).replace('.', ',');
   document.getElementById('prioCursoBar').style.width = `${Math.max(0, Math.min(100, pct))}%`;
 }
 
 function refreshPs1Fields() {
-  return fetchPs1Summary().then(({ prioridadeAtiva, prioridadeAtivaPct, geral }) => {
+  return fetchPs1Summary().then(({ prioridadeAtiva, table, row, geral }) => {
     const ativaBox = document.getElementById('prioridadeAtiva');
     const ativaValueEl = document.getElementById('prioridadeAtivaValue');
     const prioridade = prioridadeAtiva != null && String(prioridadeAtiva).trim() !== ''
@@ -2660,7 +2651,8 @@ function refreshPs1Fields() {
       : null;
     if (ativaValueEl) ativaValueEl.textContent = prioridade || '—';
     if (ativaBox) ativaBox.classList.toggle('is-empty', !prioridade);
-    updatePrioridadeEmCurso(prioridade, prioridadeAtivaPct);
+    currentPs3ProgressSource = prioridade ? { table, row, priority: prioridade } : null;
+    refreshCurrentPs3Progress();
 
     const geralPct = parseSheetPercentage(geral);
     if (geralPct == null) {
@@ -2675,6 +2667,7 @@ function refreshPs1Fields() {
     const ativaValueEl = document.getElementById('prioridadeAtivaValue');
     if (ativaValueEl) ativaValueEl.textContent = '—';
     if (ativaBox) ativaBox.classList.add('is-empty');
+    currentPs3ProgressSource = null;
     updatePrioridadeEmCurso(null, null);
     updateEvolucao(0);
   });
@@ -2698,6 +2691,7 @@ function initializeSheetWatcher() {
 }
 
 initializeSheetWatcher();
+setInterval(refreshCurrentPs3Progress, 60_000);
 
 // Refresh automático da página inteira a cada 10 minutos.
 // Boa prática para kiosks: liberta memória de caches/long-running JS, recarrega texturas
