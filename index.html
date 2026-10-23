@@ -2658,12 +2658,17 @@ async function fetchPs1Summary() {
 function updatePrioridadeEmCurso(prioridade, pct) {
   const box = document.getElementById('prioCurso');
   if (!box) return;
-  const visible = Boolean(prioridade) && pct != null;
+  const visible = Boolean(prioridade);
+  const hasProgress = pct != null && Number.isFinite(Number(pct));
   box.hidden = !visible;
   if (!visible) return;
   document.getElementById('prioCursoName').textContent = /^\d+$/.test(prioridade) ? `P${prioridade}` : prioridade;
-  document.getElementById('prioCursoPct').textContent = Number(pct).toFixed(1).replace('.', ',');
-  document.getElementById('prioCursoBar').style.width = `${Math.max(0, Math.min(100, pct))}%`;
+  document.getElementById('prioCursoPct').textContent = hasProgress
+    ? Number(pct).toFixed(1).replace('.', ',')
+    : '—';
+  document.getElementById('prioCursoBar').style.width = hasProgress
+    ? `${Math.max(0, Math.min(100, Number(pct)))}%`
+    : '0%';
 }
 
 function refreshPs1Fields() {
