@@ -2654,21 +2654,17 @@ async function fetchPs1Summary() {
 }
 
 // Faixa "Prioridade em Curso": % de realização da prioridade ativa.
-// Fica escondida quando não há prioridade ativa ou % disponível.
+// Fica escondida quando não há prioridade ativa; sem % disponível mostra 0%.
 function updatePrioridadeEmCurso(prioridade, pct) {
   const box = document.getElementById('prioCurso');
   if (!box) return;
   const visible = Boolean(prioridade);
-  const hasProgress = pct != null && Number.isFinite(Number(pct));
+  const value = pct != null && Number.isFinite(Number(pct)) ? Number(pct) : 0;
   box.hidden = !visible;
   if (!visible) return;
   document.getElementById('prioCursoName').textContent = /^\d+$/.test(prioridade) ? `P${prioridade}` : prioridade;
-  document.getElementById('prioCursoPct').textContent = hasProgress
-    ? Number(pct) === 0 ? '0' : Number(pct).toFixed(1).replace('.', ',')
-    : '—';
-  document.getElementById('prioCursoBar').style.width = hasProgress
-    ? `${Math.max(0, Math.min(100, Number(pct)))}%`
-    : '0%';
+  document.getElementById('prioCursoPct').textContent = value === 0 ? '0' : value.toFixed(1).replace('.', ',');
+  document.getElementById('prioCursoBar').style.width = `${Math.max(0, Math.min(100, value))}%`;
 }
 
 function refreshPs1Fields() {

@@ -92,3 +92,11 @@ test('awards 100% only for an exact completed percentage, even without timing da
   assert.equal(calculate(complete.table, complete.row, '1', dateAt(22, 9)), 100);
   assert.equal(calculate(incomplete.table, incomplete.row, '1', dateAt(22, 18)), 100 * 5 / 6);
 });
+test('falls back to the sheet completion % when the start time is missing', () => {
+  const numeric = makeTable({ start: null, completion: 1 / 6 });
+  assert.ok(Math.abs(calculate(numeric.table, numeric.row, '1', dateAt(22, 9)) - 100 / 6) < 0.000001);
+  const text = makeTable({ start: null, completion: '17%' });
+  assert.equal(calculate(text.table, text.row, '1', dateAt(22, 9)), 17);
+  const zero = makeTable({ start: null, completion: 0 });
+  assert.equal(calculate(zero.table, zero.row, '1', dateAt(22, 9)), 0);
+});

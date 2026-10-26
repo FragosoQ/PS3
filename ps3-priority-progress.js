@@ -119,14 +119,19 @@
     return Number.isFinite(numeric) && (numeric === 1 || numeric === 100);
   }
 
-  function isExactlyZero(value) {
-    if (value == null) return false;
-    if (typeof value === 'number') return value === 0;
+  function parseCompletionPercent(value) {
+    if (value == null) return null;
+    if (typeof value === 'number') {
+      if (!Number.isFinite(value)) return null;
+      return Math.abs(value) <= 1 ? value * 100 : value;
+    }
     const text = String(value).trim();
     const percent = text.match(/^(-?\d+(?:[.,]\d+)?)\s*%$/);
-    if (percent) return Number(percent[1].replace(',', '.')) === 0;
+    if (percent) return Number(percent[1].replace(',', '.'));
+    if (text === '') return null;
     const numeric = Number(text.replace(',', '.'));
-    return Number.isFinite(numeric) && numeric === 0;
+    if (!Number.isFinite(numeric)) return null;
+    return Math.abs(numeric) <= 1 ? numeric * 100 : numeric;
   }
 
   function dateFromSerial(value) {
@@ -268,7 +273,7 @@
     const start = parseStart(startValue, now);
     const durationSeconds = parseDurationSeconds(durationValue);
     if (!start || durationSeconds == null || durationSeconds <= 0) {
-      return isExactlyZero(completion) ? 0 : null;
+      return parseCompletionPercent(completion);
     }
 
     const elapsedSeconds = getWorkSecondsBetween(start, now);
