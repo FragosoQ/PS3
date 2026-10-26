@@ -73,10 +73,17 @@ test('matches comma and point suffixes and uses ordered fallback when a leading 
 });
 
 test('returns no progress when start or planned duration is missing', () => {
-  const missingStart = makeTable({ start: null });
-  const missingDuration = makeTable({ duration: null });
+  const missingStart = makeTable({ start: null, completion: null });
+  const missingDuration = makeTable({ duration: null, completion: null });
   assert.equal(calculate(missingStart.table, missingStart.row, '1', dateAt(22, 9)), null);
   assert.equal(calculate(missingDuration.table, missingDuration.row, '1', dateAt(22, 9)), null);
+});
+
+test('keeps an explicit zero completion visible when timing data is missing', () => {
+  const zeroPercent = makeTable({ start: null, duration: null, completion: '0%' });
+  const zeroValue = makeTable({ start: null, duration: null, completion: 0 });
+  assert.equal(calculate(zeroPercent.table, zeroPercent.row, '1', dateAt(22, 9)), 0);
+  assert.equal(calculate(zeroValue.table, zeroValue.row, '1', dateAt(22, 9)), 0);
 });
 
 test('awards 100% only for an exact completed percentage, even without timing data', () => {

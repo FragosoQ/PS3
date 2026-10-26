@@ -119,6 +119,16 @@
     return Number.isFinite(numeric) && (numeric === 1 || numeric === 100);
   }
 
+  function isExactlyZero(value) {
+    if (value == null) return false;
+    if (typeof value === 'number') return value === 0;
+    const text = String(value).trim();
+    const percent = text.match(/^(-?\d+(?:[.,]\d+)?)\s*%$/);
+    if (percent) return Number(percent[1].replace(',', '.')) === 0;
+    const numeric = Number(text.replace(',', '.'));
+    return Number.isFinite(numeric) && numeric === 0;
+  }
+
   function dateFromSerial(value) {
     const milliseconds = value * 86400000;
     const epoch = new Date(1899, 11, 30);
@@ -250,13 +260,16 @@
     const suffix = normalizePrioritySuffix(activePriority);
     if (!suffix || !PRIORITY_SUFFIXES.includes(suffix)) return null;
 
-    if (isExactlyComplete(findCompletionValue(table, row, suffix))) return 100;
+    const completion = findCompletionValue(table, row, suffix);
+    if (isExactlyComplete(completion)) return 100;
 
     const startValue = findBlockValue(table, row, 'T', suffix);
     const durationValue = findBlockValue(table, row, 'TP', suffix);
     const start = parseStart(startValue, now);
     const durationSeconds = parseDurationSeconds(durationValue);
-    if (!start || durationSeconds == null || durationSeconds <= 0) return null;
+    if (!start || durationSeconds == null || durationSeconds <= 0) {
+      return isExactlyZero(completion) ? 0 : null;
+    }
 
     const elapsedSeconds = getWorkSecondsBetween(start, now);
     const completeParts = Math.min(5, Math.floor((elapsedSeconds + 0.000001) / (durationSeconds / 6)));

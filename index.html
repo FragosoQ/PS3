@@ -2664,7 +2664,7 @@ function updatePrioridadeEmCurso(prioridade, pct) {
   if (!visible) return;
   document.getElementById('prioCursoName').textContent = /^\d+$/.test(prioridade) ? `P${prioridade}` : prioridade;
   document.getElementById('prioCursoPct').textContent = hasProgress
-    ? Number(pct).toFixed(1).replace('.', ',')
+    ? Number(pct) === 0 ? '0' : Number(pct).toFixed(1).replace('.', ',')
     : '—';
   document.getElementById('prioCursoBar').style.width = hasProgress
     ? `${Math.max(0, Math.min(100, Number(pct)))}%`
